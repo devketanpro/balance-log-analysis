@@ -1,16 +1,19 @@
+# Use a minimal Python base image
 FROM python:3.10-slim
 
 # Set working directory
 WORKDIR /app
 
-# Copy requirements
+# Copy requirement and install
 COPY requirements.txt .
-
-# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy everything into the container
-COPY . .
+# Copy scripts and data
+COPY scripts/ scripts/
+COPY data/ data/
 
-# Default command (optional - if you want to auto-run a script)
-# CMD ["python3", "scripts/generate_report.py"]
+# Create output directory
+RUN mkdir -p output
+
+# Run both scripts
+CMD ["bash", "-c", "python scripts/read_logs.py && python scripts/generate_report.py"]

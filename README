@@ -1,15 +1,33 @@
 # Balance Log Analysis
 
-This project processes and analyzes subscriber balance sync logs for Calo. It helps generate a wallet report and identify anomalies such as overdrafts.
+This project analyzes balance transaction logs from a system responsible for managing subscriber credit and debit activities. It extracts relevant wallet-related events from raw log files, parses and normalizes JSON data, and produces a structured Excel report to support accounting and analysis.
 
-## How It Works
+---
 
-1. **read_logs.py**: Extracts all `transaction: {...}` blocks from `.gz` log files and writes cleaned data to a CSV.
-2. **generate_wallet_report.py**: Parses the CSV, processes nested JSON, and exports it to an Excel report.
+## Project Structure
+balance-log-analysis/
+├── data/ # Place your .gz log files inside this folder
+│ └── balance-sync-logs/ # Example: logs from production system
+├── output/ # The cleaned Excel report will be saved here
+├── scripts/ # Python scripts for reading and processing logs
+│ ├── read_logs.py # Extracts relevant JSON records from .gz logs
+│ └── generate_report.py # Parses JSON into structured tabular data
+├── requirements.txt # Python libraries required
+├── Dockerfile # Docker configuration to run the scripts
+└── README.md 
 
-## 🐳 Dockerized Setup
+---
 
-### Build Docker Image
+## Run with Docker
+
+Make sure Docker is installed and running on your system.
+
+### Step 1: Build the Docker Image
 
 ```bash
 docker build -t balance-log-analyzer .
+
+docker run --rm \
+  -v "$PWD/data":/app/data \
+  -v "$PWD/output":/app/output \
+  balance-log-analyzer
