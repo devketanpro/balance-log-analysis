@@ -15,5 +15,8 @@ COPY data/ data/
 # Create output directory
 RUN mkdir -p output
 
-# Run both scripts
-CMD ["bash", "-c", "python scripts/read_logs.py && python scripts/generate_report.py"]
+# Expose Streamlit default port
+EXPOSE 8501
+
+# Run scripts: first read_logs.py, then generate_report.py, then launch Streamlit app
+CMD bash -c "python scripts/read_logs.py && python scripts/generate_report.py && streamlit run scripts/visulization.py --server.address=0.0.0.0 --server.port=8501"

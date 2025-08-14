@@ -1,20 +1,25 @@
 # Balance Log Analysis
 
-This project analyzes balance transaction logs from a system responsible for managing subscriber credit and debit activities. It extracts relevant wallet-related events from raw log files, parses and normalizes JSON data, and produces a structured Excel report to support accounting and analysis.
+This project analyzes balance transaction logs from a system responsible for managing subscriber credit and debit activities.  
+It extracts relevant wallet-related events from raw log files, parses and normalizes JSON data, and produces:
+- **Structured Excel reports** for accounting and analysis
+- **Interactive dashboards** using Streamlit for visual insights
 
 ---
 
 ## Project Structure
 balance-log-analysis/
-├── data/ # Place your .gz log files inside this folder
+├── data/ # Place your .gz log files here
 │ └── balance-sync-logs/ # Example: logs from production system
 ├── output/ # The cleaned Excel report will be saved here
-├── scripts/ # Python scripts for reading and processing logs
+├── scripts/ # Python scripts for processing
 │ ├── read_logs.py # Extracts relevant JSON records from .gz logs
-│ └── generate_report.py # Parses JSON into structured tabular data
-├── requirements.txt # Python libraries required
-├── Dockerfile # Docker configuration to run the scripts
-└── README.md 
+│ ├── generate_report.py # Parses JSON into structured tabular data
+│ └── visualization.py # Interactive Streamlit dashboard for visualization
+├── requirements.txt # Python dependencies
+├── Dockerfile # Docker configuration to run scripts & dashboard
+└── README.md
+
 
 ---
 
@@ -28,6 +33,13 @@ Make sure Docker is installed and running on your system.
 docker build -t balance-log-analyzer .
 
 docker run --rm \
+  -p 8501:8501 \
   -v "$PWD/data":/app/data \
   -v "$PWD/output":/app/output \
   balance-log-analyzer
+
+## Access the dashboard at:
+http://localhost:8501
+
+
+

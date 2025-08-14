@@ -1,52 +1,65 @@
 import pandas as pd
 import json
+import os
 from pandas import json_normalize
+
+input_csv = "./output/cleaned_transactions.csv"
+output_excel = "./output/wallet_report.xlsx"
 
 
 def parse_raw_json(raw_str):
+    """
+    Safely parse a JSON string, fixing common escape issues.
+    """
     try:
-        # Fix improperly escaped inner double quotes (common with nested JSON in "metadata")
         if isinstance(raw_str, str):
-            # Remove extra outer quotes if accidentally present
             raw_str = raw_str.strip().strip('"')
-            # Handle escaped double quotes in nested JSON
             raw_str = raw_str.replace('"{', "{").replace('}"', "}")
             raw_str = raw_str.replace('\\"', '"')
             return json.loads(raw_str)
-        return {}
-    except Exception as e:
-        print(f"Error parsing JSON: {e}\nRaw: {raw_str}")
-        return {}
+        elif isinstance(raw_str, dict):
+            return raw_str
+    except Exception:
+        pass
+    return {}
 
 
 def main():
-    # Load the CSV
-    input_csv_path = "./output/cleaned_transactions.csv"
-    df = pd.read_csv(input_csv_path)
+    if not os.path.exists(input_csv):
+        raise FileNotFoundError(f"Input file not found: {input_csv}")
 
-    # Parse the `_raw` column
+    df = pd.read_csv(input_csv)
     all_records = []
-    for raw in df["_raw"]:
-        parsed = parse_raw_json(raw)
 
-        # Try to parse metadata field if it's a stringified JSON
-        if "metadata" in parsed and isinstance(parsed["metadata"], str):
-            try:
-                parsed["metadata"] = json.loads(parsed["metadata"])
-            except Exception:
-                pass
+    for _, row in df.iterrows():
+        record = dict(row)
 
-        # Flatten nested JSON (e.g. metadata)
-        flat = json_normalize(parsed, sep=".")
-        all_records.append(flat)
+        # Parse `_raw` if present
+        if "_raw" in record and isinstance(record["_raw"], str):
+            parsed_raw = parse_raw_json(record["_raw"])
+            if parsed_raw:
+                record.update(parsed_raw)
 
-    # Concatenate all parsed dataframes
+        # Parse `metadata` if it's JSON
+        if "metadata" in record and isinstance(record["metadata"], str):
+            parsed_meta = parse_raw_json(record["metadata"])
+            record["metadata"] = parsed_meta
+
+        # Flatten record
+        flat_record = json_normalize(record, sep=".")
+        all_records.append(flat_record)
+
+    if not all_records:
+        print("⚠ No records found to process.")
+        return
+
     final_df = pd.concat(all_records, ignore_index=True)
+    final_df.dropna(how="all", inplace=True)
 
-    # Export to Excel
-    final_df = final_df.dropna(how="all").reset_index(drop=True)
-    final_df.to_excel("./output/wallet_report.xlsx", index=False)
-    print("Done. Report saved as wallet_report.xlsx")
+    os.makedirs(os.path.dirname(output_excel), exist_ok=True)
+    final_df.to_excel(output_excel, index=False)
+
+    print(f"Report generated: {output_excel}")
 
 
 if __name__ == "__main__":
